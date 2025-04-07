@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e17">
+    <meta name="description" content="J.A.R.V.I.S. - Assistente Avançado de Robótica e Eletrônica">
+    <title>J.A.R.V.I.S. - Assistente de Robótica</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icons/icon-192x192.png" type="image/png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <style>
+        :root {
+            --primary: #00f7ff;
+            --secondary: #7b2dff;
+            --dark: #0a0e17;
+            --light: #e0f8ff;
+            --accent: #ff2d72;
+            --tech-blue: #00a8ff;
+            --neon-green: #00ff9d;
+            --success: #00ff9d;
+            --warning: #ffcc00;
+            --error: #ff2d72;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: var(--dark);
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
+            z-index: 100;
+            display: none;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin: 0;
+            background: linear-gradient(90deg, var(--primary), var(--neon-green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 0.8rem;
+            background: linear-gradient(90deg, var(--light), var(--tech-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .voice-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: var(--dark);
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
+            transition: all 0.3s ease;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .voice-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 247, 255, 0.5);
+        }
+        
+        .voice-btn.listening {
+            animation: pulse 1.5s infinite, glow 2s infinite alternate;
+        }
+        
+        .status {
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(10, 14, 23, 0.7);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 247, 255, 0.2);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .response-container {
+            width: 100%;
+            margin-top: 2rem;
+            background: rgba(10, 14, 23, 0.7);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 247, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .project-details {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 167, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .component-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .component-item {
+            background: rgba(123, 45, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid rgba(123, 45, 255, 0.3);
+        }
+        
+        .pinout-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        .pinout-table th, .pinout-table td {
+            border: 1px solid rgba(0, 247, 255, 0.3);
+            padding: 0.5rem;
+            text-align: left;
+        }
+        
+        .pinout-table th {
+            background: rgba(0, 247, 255, 0.1);
+        }
+        
+        .steps-list {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        .steps-list li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .offline-status {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--warning);
+            color: var(--dark);
+            text-align: center;
+            padding: 0.5rem;
+            font-weight: bold;
+            display: none;
+            z-index: 1000;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px -10px var(--primary); }
+            to { box-shadow: 0 0 20px 5px var(--primary); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .voice-btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+            }
+            
+            .component-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 10px auto;
+            border: 4px solid rgba(0, 247, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-status">Você está offline, mas ainda pode acessar o conteúdo básico</div>
+    <button id="installButton" class="install-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 18V19H6V18H17ZM16 3.5L15 2.5L12 5.5L9 2.5L8 3.5L11 6.5V14.5H13V6.5L16 3.5ZM18 16V7H19V16H18ZM5 7V16H6V7H5Z" fill="#0a0e17"/>
+        </svg>
+        Instalar
+    </button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>J.A.R.V.I.S.</h1>
+            <div class="subtitle">Assistente Avançado de Robótica e Eletrônica</div>
+        </div>
+        
+        <button id="micButton" class="voice-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 1C10.3431 1 9 2.34315 9 4V12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12V4C15 2.34315 13.6569 1 12 1Z" fill="#0a0e17"/>
+                <path d="M5 11C5.55228 11 6 11.4477 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12C18 11.4477 18.4477 11 19 11C19.5523 11 20 11.4477 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 11.4477 4.44772 11 5 11Z" fill="#0a0e17"/>
+                <path d="M12 19C12.5523 19 13 19.4477 13 20V23C13 23.5523 12.5523 24 12 24C11.4477 24 11 23.5523 11 23V20C11 19.4477 11.4477 19 12 19Z" fill="#0a0e17"/>
+            </svg>
+            Ativar Voz
+        </button>
+        
+        <div id="status" class="status">
+            Pressione o botão e fale seu comando
+        </div>
+        
+        <div id="spinner" class="spinner"></div>
+        
+        <div id="response" class="response-container">
+            <div class="response-content" id="responseContent"></div>
+        </div>
+    </div>
+
+    <script>
+    // ================== SERVICE WORKER REGISTRATION ==================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(registration => {
+                console.log('ServiceWorker registration successful');
+            }).catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+    
+    // ================== INSTALL PROMPT ==================
+    let deferredPrompt;
+    const installButton = document.getElementById('installButton');
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installButton.style.display = 'flex';
+    });
+    
+    installButton.addEventListener('click', () => {
+        installButton.style.display = 'none';
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted install prompt');
+            } else {
+                console.log('User dismissed install prompt');
+            }
+            deferredPrompt = null;
+        });
+    });
+    
+    // ================== OFFLINE DETECTION ==================
+    const offlineStatus = document.querySelector('.offline-status');
+    
+    window.addEventListener('online', () => {
+        offlineStatus.style.display = 'none';
+    });
+    
+    window.addEventListener('offline', () => {
+        offlineStatus.style.display = 'block';
+    });
+    
+    // Verifica o status inicial
+    if (!navigator.onLine) {
+        offlineStatus.style.display = 'block';
+    }
+    
+    // ================== BANCO DE DADOS AMPLIADO ==================
+    const database = {
+        projetos: {
+            "Robótica": [
+                {
+                    nome: "Robô Seguidor de Linha",
+                    descricao: "Robô autônomo que segue uma linha preta em superfície clara utilizando sensores infravermelhos e lógica PID para controle preciso.",
+                    componentes: [
+                        {nome: "Arduino Uno", quantidade: 1, descricao: "Placa controladora principal"},
+                        {nome: "Sensor TCRT5000", quantidade: 3, descricao: "Sensores infravermelhos para detecção da linha"},
+                        {nome: "Motor DC com caixa de redução", quantidade: 2, descricao: "Motores para locomoção com redução 1:48"},
+                        {nome: "Ponte H L298N", quantidade: 1, descricao: "Módulo para controle dos motores"},
+                        {nome: "Bateria 9V", quantidade: 1, descricao: "Fonte de alimentação principal"},
+                        {nome: "Chassi de acrílico", quantidade: 1, descricao: "Estrutura mecânica do robô"}
+                    ],
+                    pinagem: [
+                        {pino: "D5", funcao: "PWM - Motor direito", observacao: "Controla velocidade"},
+                        {pino: "D6", funcao: "PWM - Motor esquerdo", observacao: "Controla velocidade"},
+                        {pino: "D7", funcao: "Direção motor direito", observacao: "HIGH para frente, LOW para trás"},
+                        {pino: "D8", funcao: "Direção motor esquerdo", observacao: "HIGH para frente, LOW para trás"},
+                        {pino: "A0", funcao: "Sensor esquerdo", observacao: "Retorna valor analógico 0-1023"},
+                        {pino: "A1", funcao: "Sensor central", observacao: "Retorna valor analógico 0-1023"},
+                        {pino: "A2", funcao: "Sensor direito", observacao: "Retorna valor analógico 0-1023"}
+                    ],
+                    montagem: [
+                        "Fixar os motores no chassi utilizando parafusos e porcas",
+                        "Instalar as rodas nos eixos dos motores",
+                        "Montar a roda livre na parte dianteira",
+                        "Posicionar os sensores na parte frontal, com altura ajustável",
+                        "Conectar os motores à ponte H (OUT1 e OUT2 para motor direito, OUT3 e OUT4 para esquerdo)",
+                        "Ligar a ponte H ao Arduino conforme pinagem especificada",
+                        "Conectar os sensores às entradas analógicas",
+                        "Alimentar o sistema com bateria 9V"
+                    ],
+                    codigo: `// Robô Seguidor de Linha com PID
+// Definições dos pinos
+const int motorDirPWM = 5;
+const int motorEsqPWM = 6;
+const int motorDirDir = 7;
+const int motorEsqDir = 8;
+
+const int sensorEsq = A0;
+const int sensorCentro = A1;
+const int sensorDir = A2;
+
+// Variáveis PID
+float Kp = 0.8, Ki = 0.001, Kd = 0.3;
+float erro, erroAnterior = 0, integral = 0;
+
+void setup() {
+  // Configurar pinos como saída
+  pinMode(motorDirPWM, OUTPUT);
+  pinMode(motorEsqPWM, OUTPUT);
+  pinMode(motorDirDir, OUTPUT);
+  pinMode(motorEsqDir, OUTPUT);
+  
+  // Configurar direção dos motores para frente
+  digitalWrite(motorDirDir, HIGH);
+  digitalWrite(motorEsqDir, HIGH);
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Ler sensores
+  int leituraEsq = analogRead(sensorEsq);
+  int leituraCentro = analogRead(sensorCentro);
+  int leituraDir = analogRead(sensorDir);
+  
+  // Calcular erro (lógica PID)
+  erro = (leituraEsq * -1) + (leituraDir * 1);
+  integral += erro;
+  float derivativo = erro - erroAnterior;
+  erroAnterior = erro;
+  
+  float correcao = (Kp * erro) + (Ki * integral) + (Kd * derivativo);
+  
+  // Aplicar correção aos motores
+  int velocidadeBase = 150;
+  int velDir = velocidadeBase - correcao;
+  int velEsq = velocidadeBase + correcao;
+  
+  // Limitar valores entre 0-255
+  velDir = constrain(velDir, 0, 255);
+  velEsq = constrain(velEsq, 0, 255);
+  
+  // Acionar motores
+  analogWrite(motorDirPWM, velDir);
+  analogWrite(motorEsqPWM, velEsq);
+  
+  delay(10);
+}`,
+                    dicas: [
+                        "Para melhor desempenho, calibre os sensores antes de usar colocando o robô sobre a linha e sobre o fundo para ajustar os limiares",
+                        "Ajuste os valores PID (Kp, Ki, Kd) conforme o desempenho do robô",
+                        "Mantenha os sensores a cerca de 1cm da superfície para melhor detecção",
+                        "Para competições, utilize baterias novas e verifique o alinhamento dos sensores"
+                    ]
+                },
+                {
+                    nome: "Braço Robótico com Garra",
+                    descricao: "Braço robótico de 4 graus de liberdade controlado por potenciômetros com sistema de garra no efetuador final.",
+                    componentes: [
+                        {nome: "Arduino Mega", quantidade: 1, descricao: "Placa controladora com mais pinos para servos"},
+                        {nome: "Servo Motor MG996R", quantidade: 4, descricao: "Servos de alto torque para as juntas"},
+                        {nome: "Servo Motor SG90", quantidade: 1, descricao: "Servo para a garra"},
+                        {nome: "Potenciômetro 10kΩ", quantidade: 4, descricao: "Para controle manual das juntas"},
+                        {nome: "Fonte 5V 10A", quantidade: 1, descricao: "Necessária para alimentar os servos"},
+                        {nome: "Estrutura de acrílico", quantidade: 1, descricao: "Partes cortadas a laser para montagem"}
+                    ],
+                    pinagem: [
+                        {pino: "D2", funcao: "Servo Base", observacao: "Controla rotação de 0-180 graus"},
+                        {pino: "D3", funcao: "Servo Ombro", observacao: "Controla movimento vertical"},
+                        {pino: "D4", funcao: "Servo Cotovelo", observacao: "Controla articulação média"},
+                        {pino: "D5", funcao: "Servo Garra", observacao: "Controla abertura/fechamento"},
+                        {pino: "A0", funcao: "Potenciômetro Base", observacao: "Controla servo da base"},
+                        {pino: "A1", funcao: "Potenciômetro Ombro", observacao: "Controla servo do ombro"},
+                        {pino: "A2", funcao: "Potenciômetro Cotovelo", observacao: "Controla servo do cotovelo"},
+                        {pino: "A3", funcao: "Potenciômetro Garra", observacao: "Controla servo da garra"}
+                    ],
+                    montagem: [
+                        "Montar a base fixando o servo de rotação",
+                        "Instalar o braço inferior conectando ao servo do ombro",
+                        "Fixar o braço superior com o servo do cotovelo",
+                        "Montar a garra no efetuador final",
+                        "Posicionar os potenciômetros no painel de controle",
+                        "Conectar todos os servos ao Arduino",
+                        "Ligar os potenciômetros às entradas analógicas",
+                        "Conectar a fonte de alimentação externa para os servos"
+                    ],
+                    codigo: `#include <Servo.h>
+
+// Definir os servos
+Servo servoBase, servoOmbro, servoCotovelo, servoGarra;
+
+void setup() {
+  // Anexar servos aos pinos
+  servoBase.attach(2);
+  servoOmbro.attach(3);
+  servoCotovelo.attach(4);
+  servoGarra.attach(5);
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Ler potenciômetros e mapear para ângulos
+  int angBase = map(analogRead(A0), 0, 1023, 0, 180);
+  int angOmbro = map(analogRead(A1), 0, 1023, 0, 180);
+  int angCotovelo = map(analogRead(A2), 0, 1023, 0, 180);
+  int angGarra = map(analogRead(A3), 0, 1023, 0, 180);
+  
+  // Mover servos
+  servoBase.write(angBase);
+  servoOmbro.write(angOmbro);
+  servoCotovelo.write(angCotovelo);
+  servoGarra.write(angGarra);
+  
+  // Pequeno delay para estabilidade
+  delay(15);
+}`,
+                    dicas: [
+                        "Utilize lubrificante nos eixos das juntas para movimento mais suave",
+                        "Para maior precisão, calibre os potenciômetros girando completamente antes de usar",
+                        "Em projetos com muitos servos, considere usar uma fonte dedicada para evitar queda de tensão",
+                        "Para projetos avançados, implemente controle inverso de cinemática"
+                    ]
+                }
+            ],
+            "IoT": [
+                {
+                    nome: "Estação Meteorológica WiFi",
+                    descricao: "Sistema autônomo que monitora temperatura, umidade, pressão atmosférica e qualidade do ar, enviando dados para a nuvem via WiFi.",
+                    componentes: [
+                        {nome: "ESP32", quantidade: 1, descricao: "Placa com WiFi e Bluetooth integrado"},
+                        {nome: "Sensor BME280", quantidade: 1, descricao: "Mede temperatura, umidade e pressão"},
+                        {nome: "Sensor CCS811", quantidade: 1, descricao: "Mede CO2 e compostos orgânicos voláteis"},
+                        {nome: "Display OLED 0.96\"", quantidade: 1, descricao: "Exibe dados localmente"},
+                        {nome: "Bateria LiPo 3.7V", quantidade: 1, descricao: "Para funcionamento autônomo"},
+                        {nome: "Módulo carregador TP4056", quantidade: 1, descricao: "Carrega a bateria LiPo"}
+                    ],
+                    pinagem: [
+                        {pino: "SCL", funcao: "Clock I2C", observacao: "Compartilhado por todos dispositivos I2C"},
+                        {pino: "SDA", funcao: "Dados I2C", observacao: "Compartilhado por todos dispositivos I2C"},
+                        {pino: "D21", funcao: "Interrupção CCS811", observacao: "Para alertas de nova leitura"},
+                        {pino: "3.3V", funcao: "Alimentação sensores", observacao: "Fornece 3.3V para os sensores"},
+                        {pino: "GND", funcao: "Terra", observacao: "Conexão comum de terra"}
+                    ],
+                    montagem: [
+                        "Conectar todos dispositivos I2C (BME280, CCS811, OLED) aos pinos SCL/SDA",
+                        "Ligar a interrupção do CCS811 ao pino D21",
+                        "Conectar a bateria LiPo ao módulo carregador",
+                        "Ligar a saída do carregador ao ESP32",
+                        "Montar todos componentes em uma caixa protegida",
+                        "Fazer furos para ventilação e passagem de ar para os sensores"
+                    ],
+                    codigo: `#include <Wire.h>
+#include <Adafruit_BME280.h>
+#include <Adafruit_CCS811.h>
+#include <Adafruit_SSD1306.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+Adafruit_BME280 bme;
+Adafruit_CCS811 ccs;
+Adafruit_SSD1306 display(128, 64, &Wire);
+
+const char* ssid = "SUA_REDE";
+const char* password = "SUA_SENHA";
+const char* server = "http://api.thingspeak.com/update";
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Inicializar sensores
+  bme.begin(0x76);
+  ccs.begin();
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  
+  // Conectar WiFi
+  WiFi.begin(ssid, password);
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+}
+
+void loop() {
+  // Ler sensores
+  float temp = bme.readTemperature();
+  float umid = bme.readHumidity();
+  float pres = bme.readPressure() / 100.0F;
+  
+  if(ccs.available()) {
+    if(!ccs.readData()) {
+      float co2 = ccs.geteCO2();
+      float tvoc = ccs.getTVOC();
+    }
+  }
+  
+  // Exibir localmente
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.print("Temp: "); display.print(temp); display.println(" C");
+  display.print("Umid: "); display.print(umid); display.println(" %");
+  display.print("Press: "); display.print(pres); display.println(" hPa");
+  display.display();
+  
+  // Enviar para nuvem
+  if(WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String url = server + "?api_key=SUA_CHAVE";
+    url += "&field1=" + String(temp);
+    url += "&field2=" + String(umid);
+    url += "&field3=" + String(pres);
+    
+    http.begin(url);
+    int httpCode = http.GET();
+    http.end();
+  }
+  
+  // Deep sleep por 5 minutos
+  esp_sleep_enable_timer_wakeup(5 * 60 * 1000000);
+  esp_deep_sleep_start();
+}`,
+                    dicas: [
+                        "Para maior duração da bateria, utilize o modo deep sleep do ESP32",
+                        "Posicione os sensores longe da placa para evitar interferência térmica",
+                        "Para medições precisas, calibre os sensores conforme manual do fabricante",
+                        "Considere usar um case à prova de intempéries para instalação externa"
+                    ]
+                }
+            ]
+        },
+        interacao: {
+            cumprimentos: [
+                "Olá! Sou o J.A.R.V.I.S., seu assistente de robótica. Como posso ajudar hoje?",
+                "Bem-vindo de volta! Pronto para trabalhar em algum projeto?",
+                "Saudações! Estou aqui para auxiliar com seus projetos de robótica e eletrônica.",
+                "Oi! Que bom ver você novamente. O que vamos criar hoje?",
+                "Cumprimentos! Estou à disposição para ajudar com seus projetos técnicos."
+            ],
+            despedidas: [
+                "Até logo! Estarei aqui quando precisar de ajuda com seus projetos.",
+                "Foi um prazer ajudar! Não hesite em chamar quando precisar.",
+                "Encerrando por agora. Volte sempre para novos projetos!",
+                "Até mais! Se tiver dúvidas técnicas, estou à disposição.",
+                "Finalizando sessão. Bons estudos e boas construções!"
+            ],
+            agradecimentos: [
+                "De nada! Fico feliz em poder ajudar com seus projetos.",
+                "Não há de quê! Estou sempre disponível para auxiliar na robótica.",
+                "Foi um prazer ajudar! Qualquer dúvida, é só chamar.",
+                "Às ordens! Estou aqui para facilitar seu trabalho com eletrônica.",
+                "Por nada! Continue explorando o fascinante mundo da robótica."
+            ],
+            piadas: [
+                "Por que o Arduino foi preso? Porque estava fazendo loop infinito sem condição de parada!",
+                "Qual é o componente eletrônico mais romântico? O resistor, porque ele resiste ao amor!",
+                "Por que o programador colocou um guarda-chuva na cama? Para se proteger do fall-through!",
+                "O que o ESP32 disse para o Arduino? 'Você é tão limitado!'",
+                "Por que o robô foi mal na escola? Porque tinha problemas de hardware!"
+            ],
+            curiosidades: [
+                "Sabia que o primeiro robô industrial foi instalado numa fábrica da GM em 1961? Ele se chamava Unimate e pesava quase 2 toneladas!",
+                "O Arduino foi criado em 2005 na Itália como ferramenta para estudantes de design. O nome vem de um bar onde os criadores se reuniam!",
+                "O menor robô funcional do mundo é menor que um grão de areia e pode ser usado em medicina para entregar medicamentos!",
+                "O maior robô do mundo é o T-52 ENRYU, usado para resgates no Japão. Ele tem 3.5m de altura e pode levantar carros!",
+                "O ESP32 pode operar em modo ultra low power consumindo apenas 5μA, permitindo funcionar por mais de um ano com uma pequena bateria!"
+            ]
+        }
+    };
+
+    // ================== SISTEMA DE VOZ ==================
+    
+    const initializeVoiceRecognition = () => {
+        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            return null;
+        }
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'pt-BR';
+        recognition.maxAlternatives = 1;
+        
+        return recognition;
+    };
+    
+    const configureSpeechSynthesis = () => {
+        if (!'speechSynthesis' in window) return;
+        
+        speechSynthesis.onvoiceschanged = () => {
+            const voices = speechSynthesis.getVoices();
+            console.log("Vozes disponíveis:", voices);
+        };
+    };
+    
+    const speak = (text) => {
+        if (!'speechSynthesis' in window) return;
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        
+        const voices = speechSynthesis.getVoices();
+        const portugueseVoice = voices.find(v => v.lang.includes('pt'));
+        if (portugueseVoice) {
+            utterance.voice = portugueseVoice;
+        }
+        
+        speechSynthesis.speak(utterance);
+    };
+    
+    // ================== LÓGICA PRINCIPAL ==================
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const micButton = document.getElementById('micButton');
+        const statusElement = document.getElementById('status');
+        const responseContent = document.getElementById('responseContent');
+        const spinner = document.getElementById('spinner');
+        
+        const recognition = initializeVoiceRecognition();
+        configureSpeechSynthesis();
+        
+        if (!recognition) {
+            micButton.disabled = true;
+            statusElement.innerHTML = 'Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.';
+            return;
+        }
+        
+        recognition.onstart = () => {
+            micButton.classList.add('listening');
+            statusElement.textContent = "Ouvindo... Fale agora";
+        };
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.toLowerCase();
+            statusElement.textContent = `Você disse: "${transcript}"`;
+            spinner.style.display = 'block';
+            
+            // Simula um pequeno delay para processamento
+            setTimeout(() => {
+                processCommand(transcript);
+                spinner.style.display = 'none';
+            }, 500);
+        };
+        
+        recognition.onerror = (event) => {
+            micButton.classList.remove('listening');
+            spinner.style.display = 'none';
+            statusElement.textContent = `Erro: ${getErrorDescription(event.error)}`;
+        };
+        
+        recognition.onend = () => {
+            micButton.classList.remove('listening');
+            spinner.style.display = 'none';
+        };
+        
+        micButton.addEventListener('click', () => {
+            try {
+                if (micButton.classList.contains('listening')) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            } catch (error) {
+                statusElement.textContent = "Erro ao acessar microfone";
+                spinner.style.display = 'none';
+            }
+        });
+        
+        // Mensagem de boas-vindas
+        setTimeout(() => {
+            const welcomeMsg = `${randomItem(database.interacao.cumprimentos)} Posso ajudar com projetos de robótica, IoT e eletrônica. Experimente dizer "mostrar projetos" ou "contar uma curiosidade".`;
+            showResponse(welcomeMsg);
+            speak(welcomeMsg);
+        }, 1000);
+    });
+    
+    function processCommand(command) {
+        let response = "";
+        
+        // Comandos de interação
+        if (command.includes("oi") || command.includes("olá") || command.includes("bom dia") || command.includes("boa tarde") || command.includes("boa noite")) {
+            response = randomItem(database.interacao.cumprimentos);
+        }
+        else if (command.includes("tchau") || command.includes("até logo") || command.includes("sair")) {
+            response = randomItem(database.interacao.despedidas);
+        }
+        else if (command.includes("obrigado") || command.includes("agradeço") || command.includes("valeu")) {
+            response = randomItem(database.interacao.agradecimentos);
+        }
+        else if (command.includes("piada") || command.includes("engraçado") || command.includes("humor")) {
+            response = randomItem(database.interacao.piadas);
+        }
+        else if (command.includes("curiosidade") || command.includes("sabia") || command.includes("interessante")) {
+            response = randomItem(database.interacao.curiosidades);
+        }
+        
+        // Comandos técnicos
+        else if (command.includes("projeto") || command.includes("projetos") || command.includes("mostrar projetos")) {
+            response = generateProjectCategories();
+        }
+        else if (command.includes("robótica") || command.includes("robô")) {
+            response = generateProjectList("Robótica");
+        }
+        else if (command.includes("iot") || command.includes("internet das coisas")) {
+            response = generateProjectList("IoT");
+        }
+        else if (command.includes("seguidor de linha") || command.includes("robô seguidor")) {
+            response = generateProjectDetails("Robótica", "Robô Seguidor de Linha");
+        }
+        else if (command.includes("braço robótico") || command.includes("robótico")) {
+            response = generateProjectDetails("Robótica", "Braço Robótico com Garra");
+        }
+        else if (command.includes("estação meteorológica") || command.includes("estação iot")) {
+            response = generateProjectDetails("IoT", "Estação Meteorológica WiFi");
+        }
+        else if (command.includes("componentes") || command.includes("materiais")) {
+            response = "Posso listar os componentes de qualquer projeto. Diga qual projeto você quer saber os componentes, por exemplo: 'componentes do robô seguidor de linha'";
+        }
+        else if (command.includes("pinagem") || command.includes("conexões")) {
+            response = "Posso mostrar a pinagem de qualquer projeto. Especifique o projeto, como: 'pinagem do braço robótico'";
+        }
+        else if (command.includes("montagem") || command.includes("como montar")) {
+            response = "Tenho instruções detalhadas de montagem. Diga de qual projeto você precisa, como: 'montagem da estação meteorológica'";
+        }
+        else if (command.includes("código") || command.includes("programação")) {
+            response = "Posso mostrar exemplos de código para os projetos. Especifique qual projeto deseja, como: 'código do robô seguidor'";
+        }
+        else if (command.includes("dicas") || command.includes("sugestões")) {
+            response = "Tenho várias dicas técnicas para os projetos. Diga de qual projeto quer dicas, como: 'dicas para o braço robótico'";
+        }
+        else if (command.includes("ajuda") || command.includes("comandos")) {
+            response = generateHelpMessage();
+        }
+        else {
+            response = "Não entendi completamente. Você pode reformular ou dizer 'Ajuda' para ver o que posso fazer. Estou aqui para ajudar com projetos de robótica, IoT e eletrônica.";
+        }
+        
+        showResponse(response);
+        speak(response);
+    }
+    
+    function generateProjectCategories() {
+        let html = "<h3>Categorias de Projetos Disponíveis:</h3><ul>";
+        for (const category in database.projetos) {
+            html += `<li><strong>${category}</strong> - ${database.projetos[category].length} projetos disponíveis</li>`;
+        }
+        html += "</ul><p>Diga qual categoria deseja explorar, por exemplo: 'Mostrar projetos de robótica'</p>";
+        return html;
+    }
+    
+    function generateProjectList(category) {
+        const projects = database.projetos[category];
+        if (!projects || projects.length === 0) return `Não encontrei projetos na categoria ${category}`;
+        
+        let html = `<h3>Projetos de ${category}:</h3><ul>`;
+        projects.forEach(proj => {
+            html += `<li style="margin-bottom: 1rem;"><strong>${proj.nome}</strong>: ${proj.descricao}<br>
+                    <small>Diga "detalhes do ${proj.nome.toLowerCase()}" para mais informações</small></li>`;
+        });
+        html += "</ul>";
+        return html;
+    }
+    
+    function generateProjectDetails(category, projectName) {
+        const project = database.projetos[category]?.find(p => p.nome === projectName);
+        if (!project) return `Projeto "${projectName}" não encontrado na categoria ${category}`;
+        
+        let html = `
+            <h3>${project.nome}</h3>
+            <p>${project.descricao}</p>
+            
+            <div class="project-details">
+                <h4>🔧 Componentes Necessários:</h4>
+                <div class="component-list">
+                    ${project.componentes.map(comp => `
+                        <div class="component-item">
+                            <strong>${comp.nome}</strong> (${comp.quantidade}x)<br>
+                            <small>${comp.descricao}</small>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <h4>🔌 Pinagem e Conexões:</h4>
+                <table class="pinout-table">
+                    <tr><th>Pino</th><th>Função</th><th>Observação</th></tr>
+                    ${project.pinagem.map(pin => `
+                        <tr>
+                            <td><code>${pin.pino}</code></td>
+                            <td>${pin.funcao}</td>
+                            <td><small>${pin.observacao}</small></td>
+                        </tr>
+                    `).join('')}
+                </table>
+                
+                <h4>🛠️ Passos de Montagem:</h4>
+                <ol class="steps-list">
+                    ${project.montagem.map(step => `<li>${step}</li>`).join('')}
+                </ol>
+                
+                <h4>💻 Código Exemplo:</h4>
+                <pre><code>${project.codigo}</code></pre>
+                
+                <h4>💡 Dicas Técnicas:</h4>
+                <ul class="steps-list">
+                    ${project.dicas.map(tip => `<li>${tip}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+        
+        return html;
+    }
+    
+    function generateHelpMessage() {
+        return `
+            <h3>Ajuda - Comandos Disponíveis</h3>
+            <p>Posso ajudar com:</p>
+            
+            <h4>📌 Navegação Básica</h4>
+            <ul>
+                <li>"Mostrar projetos" - Lista todas categorias</li>
+                <li>"Projetos de robótica" - Mostra projetos específicos</li>
+                <li>"Detalhes do [nome do projeto]" - Mostra informações completas</li>
+            </ul>
+            
+            <h4>🔍 Informações Técnicas</h4>
+            <ul>
+                <li>"Componentes do [projeto]" - Lista de materiais</li>
+                <li>"Pinagem do [projeto]" - Diagrama de conexões</li>
+                <li>"Montagem do [projeto]" - Passo-a-passo</li>
+                <li>"Código do [projeto]" - Exemplo de programação</li>
+                <li>"Dicas para [projeto]" - Sugestões técnicas</li>
+            </ul>
+            
+            <h4>💬 Interação</h4>
+            <ul>
+                <li>"Contar uma piada" - Piadas técnicas</li>
+                <li>"Curiosidade" - Fatos interessantes</li>
+                <li>"Ajuda" - Mostra esta mensagem</li>
+            </ul>
+        `;
+    }
+    
+    function showResponse(content) {
+        const responseElement = document.getElementById('responseContent');
+        responseElement.innerHTML = content;
+        document.getElementById('response').style.display = 'block';
+    }
+    
+    function randomItem(array) {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+    
+    function getErrorDescription(errorCode) {
+        const errors = {
+            'no-speech': 'Nenhuma fala detectada',
+            'audio-capture': 'Erro ao capturar áudio',
+            'not-allowed': 'Microfone bloqueado',
+            'aborted': 'Reconhecimento abortado',
+            'network': 'Erro de rede',
+            'language-not-supported': 'Idioma não suportado'
+        };
+        return errors[errorCode] || 'Erro desconhecido';
+    }
+    </script>
+</body>
+</html>
